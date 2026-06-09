@@ -1,0 +1,4 @@
+# Secrets and runtime state — never commit these
+config.local.ps1
+state.json
+*.log
