@@ -1,0 +1,10 @@
+{
+  "firstName": "Santiago",
+  "lastName": "Labarca",
+  "berkeleyEmail": "santiago.labarca@berkeley.edu",
+  "familySize": "2",
+  "dayPreference": "Sunday",
+  "stopDate": "2027-06-30",
+  "gmailQuery": "from:sparrfood@gmail.com subject:\"SPFD waitlist Google form\" newer_than:5d",
+  "taskName": "SPFD Pantry Auto-Register"
+}

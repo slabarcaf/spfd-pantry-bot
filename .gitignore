@@ -1,4 +1,10 @@
-# Secrets and runtime state — never commit these
-config.local.ps1
+# Secrets and runtime state — never commit
+.env
 state.json
 *.log
+
+# Node + Playwright
+node_modules/
+
+# Persisted browser login session (contains Google cookies — NEVER commit)
+.browser-profile/

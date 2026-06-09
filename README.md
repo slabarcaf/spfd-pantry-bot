@@ -2,75 +2,89 @@
 
 Automatically registers Santiago for the weekly **Student Parent Food Donations Program**
 (SPFD) pantry waitlist. Every Sun/Mon/Tue, `sparrfood@gmail.com` emails a brand-new Google
-Form (the link and field IDs change every week). This bot reads that email, parses the
-fresh form, and submits the registration — every week, unattended, until **2027-06-30**,
-when it stops itself.
+Form (the link and field ids change every week). This bot reads that email, parses the fresh
+form, and submits the registration — weekly, unattended, until **2027-06-30**, when it stops
+itself.
 
 ## How it works
 
-1. Reads Gmail (read-only) for the latest `"… SPFD waitlist Google form"` email and pulls
-   out the `forms.gle/…` link.
-2. Fetches the form, parses `FB_PUBLIC_LOAD_DATA_` to find each question's `entry.*` id
-   (matched by title keyword, since wording/dates change weekly), and picks the **Sunday**
-   day option.
-3. POSTs the response (no Google sign-in required — the form takes a plain email field).
-4. Records the submitted URL in `state.json` so re-runs never double-submit.
+1. **Read Gmail** (read-only, OAuth) for the latest `"… SPFD waitlist Google form"` email and
+   pull out the `forms.gle/…` link.
+2. **Parse the form** — read `FB_PUBLIC_LOAD_DATA_`, map each question to its `entry.*` id by
+   title keyword (robust to weekly wording/date changes), pick the **Sunday** option, and build
+   a pre-filled form URL.
+3. **Submit** — the form requires Google sign-in ("collect verified email"), so a plain POST is
+   rejected. Instead a headless browser using a **saved Google login** opens the pre-filled form
+   and clicks Submit.
+4. **Idempotent** — the submitted URL is recorded in `state.json`, so extra runs never
+   double-submit.
 
-Confirmation each week is automatic: Google emails you *"Thanks for filling out this
-form…"*. Failures (if any) optionally ping you on Telegram.
+Each week Google emails you *"Thanks for filling out this form…"* — that's your confirmation.
+If a run ever fails (e.g. the saved login expired), you get a **Telegram alert containing a
+1-tap pre-filled link** so you can still register by hand.
 
-## Requirements — nothing to install
+## Requirements on the Casa PC
 
-Runs on **pure Windows built-ins**: PowerShell 5.1+ and Task Scheduler. No Node, no Python.
-You only need `gh` (already on the Casa PC) to pull this repo.
+- **Node.js** (one-time install — `winget install OpenJS.NodeJS.LTS`).
+- Playwright's Chromium (installed by the setup below — self-contained, no system Chrome
+  needed). Optionally set `CHROME_CHANNEL=chrome` in `.env` to use installed Chrome instead.
+- `gh` (already present) to pull this repo.
 
-## One-time setup on the Casa PC
+## One-time setup
 
 ```powershell
-# 1. Get the code
-gh repo clone <your-username>/spfd-pantry-bot
+gh repo clone slabarcaf/spfd-pantry-bot
 cd spfd-pantry-bot
 
-# 2. Create your secrets file
-Copy-Item config.local.ps1.example config.local.ps1
-#    Edit config.local.ps1: paste $GoogleClientId + $GoogleClientSecret
-#    (reuse the SAME values as the Melissa project).
+npm install
+npx playwright install chromium
 
-# 3. Mint a Gmail-read refresh token (opens a browser; sign in as your Berkeley account)
-.\Get-RefreshToken.ps1
-#    Copy the printed token into config.local.ps1 as $GoogleRefreshToken.
+# Secrets
+Copy-Item .env.example .env
+#   Fill GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET (same as Melissa) and
+#   GOOGLE_REFRESH_TOKEN_BERKELEY (Melissa's Berkeley token likely already works;
+#   if Gmail calls 403, run:  npm run get-token  and paste the printed token).
 
-# 4. Dry run — proves it finds the email + parses the form, WITHOUT submitting
-.\Register-Spfd.ps1 -DryRun
+# Sign into Google ONCE (opens a visible browser) so the bot can submit later
+npm run login
 
-# 5. One real submission to confirm end-to-end (check for the Google receipt email)
-.\Register-Spfd.ps1
+# Dry run — finds the email + parses the form, prints the plan, does NOT submit
+npm run dry-run
 
-# 6. Schedule it: Tuesday 9am + Thursday 9am safety net
-.\Install-Task.ps1
+# One real run to confirm end-to-end (watch for the Google receipt email)
+npm start
+
+# Schedule it: Tuesday 9am + Thursday 9am safety net
+powershell -ExecutionPolicy Bypass -File scripts\Install-Task.ps1
 ```
 
-That's it. It now runs itself every week and shuts down after `StopDate`.
+Done — it now runs itself weekly and shuts down after `stopDate`.
 
-> **OAuth longevity:** so the refresh token survives 13 months, the Google OAuth client's
-> consent screen must be **Internal** (Berkeley Workspace) or **Published** — not "Testing"
-> (Testing tokens expire in ~7 days). This is the same client that keeps Melissa working,
-> so it's already set correctly.
+> **OAuth longevity:** so the Gmail refresh token survives 13 months, the Google OAuth
+> client's consent screen must be **Internal** (Berkeley Workspace) or **Published** — not
+> "Testing" (Testing tokens die in ~7 days). It's the same client that keeps Melissa working.
+>
+> **Login longevity:** the saved Google session (`.browser-profile/`) can occasionally expire.
+> When it does, the bot Telegrams you the 1-tap link; re-run `npm run login` to refresh it.
 
 ## Files
 
-| File | Purpose |
+| Path | Purpose |
 |---|---|
-| `Register-Spfd.ps1` | Entry point (what Task Scheduler runs). `-DryRun` to preview. |
-| `Spfd-Lib.ps1` | OAuth, Gmail search, form parse, submit, logging. |
-| `config.ps1` | Non-secret answers (name, email, family size, day, stop date). |
-| `config.local.ps1` | **Secrets** (gitignored): OAuth client + refresh token. |
-| `Get-RefreshToken.ps1` | One-time helper to mint the Gmail refresh token. |
-| `Install-Task.ps1` | Registers the weekly scheduled task. |
-| `state.json` | Submitted-URL log for idempotency (gitignored, auto-created). |
-| `spfd.log` | Run log (gitignored, auto-created). |
+| `src/index.js` | Entry point (what Task Scheduler runs). `--dry-run` to preview. |
+| `src/gmail.js` | Find the weekly email, extract the form link. |
+| `src/form.js` | Parse the form → entry ids + Sunday option + pre-filled URL. |
+| `src/submit.js` | Headless Playwright submit using the saved login. |
+| `src/login.js` | One-time: sign into Google, persist the session. |
+| `src/get-token.js` | One-time (if needed): mint a `gmail.readonly` refresh token. |
+| `src/auth.js` / `src/notify.js` / `src/browser.js` | OAuth, Telegram alert, browser config. |
+| `config.json` | Your answers (name, email, family size, day, stop date). |
+| `.env` | **Secrets** (gitignored): OAuth client + refresh token + Telegram. |
+| `.browser-profile/` | Saved Google login (gitignored — contains cookies). |
+| `state.json` / `spfd.log` | Idempotency log + run log (gitignored). |
+| `scripts/Install-Task.ps1` | Registers the weekly scheduled task. |
 
 ## Changing your answers
 
-Edit `config.ps1` — e.g. change `$DayPreference` to `"Both"` or `"Saturday"`, update
-`$FamilySize`, or move `$StopDate`. No code changes needed.
+Edit `config.json` — e.g. `dayPreference` to `"Both"`/`"Saturday"`, `familySize`, or move
+`stopDate`. No code changes needed.

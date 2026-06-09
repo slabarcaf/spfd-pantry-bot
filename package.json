@@ -1,0 +1,17 @@
+{
+  "name": "spfd-pantry-bot",
+  "version": "1.0.0",
+  "description": "Auto-registers Santiago for the weekly SPFD pantry waitlist Google form.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js",
+    "dry-run": "node src/index.js --dry-run",
+    "login": "node src/login.js",
+    "get-token": "node src/get-token.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "playwright": "^1.48.0"
+  }
+}
