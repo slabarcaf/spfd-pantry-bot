@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --accent: #6c47ff; --muted: #666; --line: #e5e5e5; --bg: #fff; --fg: #111; }
+  @media (prefers-color-scheme: dark) { :root { --muted: #aaa; --line: #333; --bg: #1c1c1e; --fg: #eee; } }
+  body { font: 13px/1.4 -apple-system, system-ui, sans-serif; width: 340px; margin: 0; padding: 12px; background: var(--bg); color: var(--fg); }
+  h1 { font-size: 15px; margin: 0 0 8px; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .row small { display: block; color: var(--muted); }
+  #status { margin: 8px 0; padding: 8px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }
+  button { font: inherit; padding: 6px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #log { max-height: 220px; overflow: auto; font: 11px/1.35 ui-monospace, Menlo, monospace; background: color-mix(in srgb, var(--fg) 5%, transparent); padding: 6px; border-radius: 6px; white-space: pre-wrap; }
+  .logHead { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .logHead button { padding: 2px 6px; font-size: 11px; }
+</style>
+</head>
+<body>
+  <h1>Bear Pantry Auto-Join</h1>
+  <label class="row"><span>Armed<small>Join automatically when the list opens</small></span><input type="checkbox" id="armed"></label>
+  <label class="row"><span>Test mode<small>Fill the form but never click "Join the line"</small></span><input type="checkbox" id="test"></label>
+  <div id="status"></div>
+  <div class="buttons">
+    <button class="primary" id="open">Open pantry tab</button>
+    <button id="testFill">Test fill now</button>
+    <button id="unlock">Reset 3 h lock</button>
+    <button id="options">Settings</button>
+  </div>
+  <div class="logHead"><strong>Log</strong><button id="clear">Clear</button></div>
+  <div id="log"></div>
+  <script src="defaults.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

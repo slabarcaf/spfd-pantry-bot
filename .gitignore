@@ -8,3 +8,6 @@ node_modules/
 
 # Persisted browser login session (contains Google cookies — NEVER commit)
 .browser-profile/
+
+# macOS
+.DS_Store

@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Bear Pantry Auto-Join Settings</title>
+<style>
+  :root { --accent: #6c47ff; --muted: #666; --line: #ddd; --bg: #fff; --fg: #111; }
+  @media (prefers-color-scheme: dark) { :root { --muted: #aaa; --line: #444; --bg: #1c1c1e; --fg: #eee; } }
+  body { font: 14px/1.5 -apple-system, system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 16px; background: var(--bg); color: var(--fg); }
+  label { display: block; margin: 14px 0 4px; font-weight: 600; }
+  small { color: var(--muted); font-weight: 400; }
+  input[type=text], input[type=email], input[type=tel], input[type=number], textarea {
+    width: 100%; box-sizing: border-box; padding: 7px; font: inherit; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg);
+  }
+  textarea { height: 90px; font-family: ui-monospace, Menlo, monospace; }
+  .check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+  button { margin-top: 18px; padding: 8px 18px; font: inherit; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
+  #msg { margin-left: 10px; }
+</style>
+</head>
+<body>
+  <h1>Bear Pantry Auto-Join</h1>
+
+  <label for="name">Name</label>
+  <input type="text" id="name">
+  <label for="phone">Phone <small>(optional on the form)</small></label>
+  <input type="tel" id="phone">
+  <label for="email">Email <small>(optional on the form)</small></label>
+  <input type="email" id="email">
+
+  <label for="windows">Watch windows <small>(Pacific time, one per line, e.g. <code>Mon 12:00-14:00</code>)</small></label>
+  <textarea id="windows"></textarea>
+  <label for="lead">Start watching this many minutes early</label>
+  <input type="number" id="lead" min="0" max="120">
+
+  <label class="check"><input type="checkbox" id="onlyInWindows"> Only act inside watch windows <small>(safer: browsing the page off-hours won't join)</small></label>
+  <label class="check"><input type="checkbox" id="autoSubmit"> Auto-submit <small>(off = test mode, fill only)</small></label>
+  <label class="check"><input type="checkbox" id="armed"> Armed</label>
+
+  <button id="save">Save</button><span id="msg"></span>
+
+  <script src="defaults.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

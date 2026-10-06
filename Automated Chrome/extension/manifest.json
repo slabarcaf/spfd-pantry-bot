@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Bear Pantry Auto-Join",
+  "version": "1.0.0",
+  "description": "Joins the Bear Pantry Waitwhile line the moment it opens. One submission, no reCAPTCHA tricks.",
+  "permissions": ["storage", "notifications", "offscreen", "alarms", "power"],
+  "host_permissions": ["https://waitwhile.com/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html", "default_icon": "icon128.png" },
+  "options_page": "options.html",
+  "icons": { "128": "icon128.png" },
+  "content_scripts": [
+    {
+      "matches": ["https://waitwhile.com/locations/bearpantry*"],
+      "js": ["defaults.js", "content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://waitwhile.com/locations/bearpantry*"],
+      "js": ["page-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

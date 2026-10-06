@@ -6,6 +6,9 @@ Form (the link and field ids change every week). This bot reads that email, pars
 form, and submits the registration — weekly, unattended, until **2027-06-30**, when it stops
 itself.
 
+> **Also in this repo:** [`Automated Chrome/`](Automated%20Chrome/) contains a separate Chrome
+> extension that auto-joins the Bear Pantry (Waitwhile) line the moment it opens.
+
 ## How it works
 
 1. **Read Gmail** (read-only, OAuth) for the latest `"… SPFD waitlist Google form"` email and
