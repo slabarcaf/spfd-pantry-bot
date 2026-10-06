@@ -12,9 +12,9 @@ const BP = {
   LOG_MAX: 60,
 
   DEFAULTS: {
-    name: 'Santiago Labarca',
-    phone: '(415) 710-2860',
-    email: 'santiago.labarca@berkeley.edu',
+    name: '',            // required by the form; set in Settings
+    phone: '',           // optional
+    email: '',           // optional
     armed: false,        // master switch; arm from the popup
     autoSubmit: true,    // false = test mode: fill the form, never click "Join the line"
     onlyInWindows: true, // only act during the watch windows below

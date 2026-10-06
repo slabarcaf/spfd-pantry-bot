@@ -10,13 +10,14 @@ async function render() {
   $('test').checked = !cfg.autoSubmit;
 
   const lines = [];
-  if (!cfg.armed) lines.push('⏸ Disarmed. Nothing will happen.');
+  if (!cfg.name) lines.push('⚠️ Set your name in Settings first. Nothing runs without it.');
+  else if (!cfg.armed) lines.push('⏸ Disarmed. Nothing will happen.');
   else if (BP.isLocked(state)) {
     lines.push(`✅ Submitted at ${new Date(state.submittedAt).toLocaleTimeString()}. Locked for 3 h.`);
   } else if (!cfg.onlyInWindows || BP.inWindow(cfg)) {
     lines.push(cfg.autoSubmit ? '🟢 Watching now. Will join as soon as it opens.' : '🟡 Watching now (test mode: fill only).');
   } else lines.push(`🕒 Armed. Next watch window: ${BP.nextWindow(cfg)} PT (−${cfg.leadMinutes} min).`);
-  if (cfg.armed) lines.push('Keep a pantry tab open and visible, Mac awake and plugged in.');
+  if (cfg.armed && cfg.name) lines.push('Chrome must be running and the Mac awake, lid open, plugged in. The pantry tab opens by itself when watching starts.');
   $('status').textContent = lines.join('\n');
   $('status').style.whiteSpace = 'pre-line';
 

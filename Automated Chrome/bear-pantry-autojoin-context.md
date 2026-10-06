@@ -2,15 +2,15 @@
 
 ## Goal
 
-Build a small tool that runs in Santiago's own Chrome, waits on the Bear Pantry Waitwhile page, and the moment the waitlist opens: clicks "Join waitlist", fills his details, and clicks "Join the line". One submission, as fast as possible, no manual clicks.
+Build a small tool that runs in the user's own Chrome, waits on the Bear Pantry Waitwhile page, and the moment the waitlist opens: clicks "Join waitlist", fills their details, and clicks "Join the line". One submission, as fast as possible, no manual clicks.
 
 ## Recommendation (build this)
 
-A Manifest V3 Chrome extension with a content script, running in his normal, logged-in Chrome profile.
+A Manifest V3 Chrome extension with a content script, running in their normal, logged-in Chrome profile.
 
 Why not Playwright/Puppeteer: the page loads Google reCAPTCHA v3 (invisible scoring). A real user profile scores better than an automation-launched browser. An extension in the everyday profile is also the simplest to deploy "here or in Chrome".
 
-Hard rule: do not try to defeat or spoof reCAPTCHA. If a visible challenge or an error appears, stop and alert the user (sound + notification) so he finishes manually.
+Hard rule: do not try to defeat or spoof reCAPTCHA. If a visible challenge or an error appears, stop and alert the user (sound + notification) so they finish manually.
 
 ## What I verified on the live page (Mon Oct 5, 2026)
 
@@ -60,14 +60,14 @@ So what: the user observes the button at 12:30 on Mondays, but configured hours 
 
 | Field | Selector | Notes |
 |---|---|---|
-| Name (required) | `input#form_name` (`name="form_name"`, `autocomplete="name"`) | Use "Santiago Labarca" (what he uses today) |
+| Name (required) | `input#form_name` (`name="form_name"`, `autocomplete="name"`) | Your full name (set in Settings) |
 | Phone country | `select[name="form_phoneCountry"]` | Defaults to US |
-| Phone (optional) | `input#form_phone` (`type="tel"`) | (415) 710-2860 |
-| Email (optional) | `input#form_email` (`type="email"`) | santiago.labarca@berkeley.edu |
+| Phone (optional) | `input#form_phone` (`type="tel"`) | e.g. (555) 555-0100, set in Settings |
+| Email (optional) | `input#form_email` (`type="email"`) | e.g. you@example.com, set in Settings |
 | reCAPTCHA token | `textarea[name="g-recaptcha-response"]` | Filled by Google's script. Do not touch. |
 | Submit | `button` with text "Join the line" | Second `type="submit"` button; the first is "Back" |
 
-Consent text under the button: proceeding accepts Waitwhile's Guest Terms and Privacy Policy. He accepted this when building the tool; note it in the README.
+Consent text under the button: proceeding accepts Waitwhile's Guest Terms and Privacy Policy. The user accepted this when building the tool; note it in the README.
 
 Server error strings present in the bundle: `max_waiting_capacity_exceeded` ("The waitlist is full, please try again later."), `no_available_slots`.
 

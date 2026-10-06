@@ -57,6 +57,7 @@ function testMode() {
 }
 
 function active() {
+  if (!cfg.name) return false; // the only required field; set in Settings
   if (TEST_TAB) return true;
   return cfg.armed && !BP.isLocked(state) && (!cfg.onlyInWindows || BP.inWindow(cfg));
 }
@@ -219,14 +220,17 @@ function form() {
 
 async function submit() {
   submitting = true;
-  // Re-read storage so a second tab can't double-submit.
-  state = await BP.getState();
-  if (BP.isLocked(state)) { BP.log('submit_skipped', 'locked: already submitted < 3 h ago'); return; }
-  state = { ...state, submittedAt: Date.now() };
-  await chrome.storage.local.set({ state });
+  // The service worker grants the lock atomically, so two open tabs can't both submit.
+  const granted = await chrome.runtime.sendMessage({ type: 'claimSubmit' }).catch(() => false);
+  if (!granted) { BP.log('submit_skipped', 'locked: already submitted < 3 h ago'); return; }
 
   const btn = findButton('Join the line');
-  if (!btn) { BP.log('submit_failed', '"Join the line" button vanished'); submitting = false; return; }
+  if (!btn) {
+    BP.log('submit_failed', '"Join the line" button vanished');
+    chrome.runtime.sendMessage({ type: 'releaseSubmit' }).catch(() => {});
+    submitting = false;
+    return;
+  }
   watch = { start: Date.now(), path: location.pathname, baseline: errorsIn(bodyText()) };
   btn.click();
   BP.log('submit_clicked');

@@ -16,32 +16,50 @@ you so you can finish by hand.
 2. Turn on **Developer mode** (top right).
 3. Click **Load unpacked** and pick the `extension/` folder next to this README.
 4. Pin the extension (puzzle icon → pin) so the badge is visible.
-5. Click the icon → **Settings** and check your name, phone and email. They're pre-filled
-   with the values from the spec. Click **Save**.
+5. Click the icon → **Settings** and enter your name (required). Phone and email are
+   optional. Click **Save**. Nothing runs until a name is set, and the badge shows `!` if
+   you arm it without one.
+6. Arm it from the popup. It stays armed across restarts, so you only do this once.
 
 After editing any file in `extension/`, click the ↻ reload icon on the extension card, then
 reload the pantry tab.
 
-## Before each pantry day
+## What has to be on
 
-1. Click the icon → **Open pantry tab**. Put that tab in its own window and leave it in the
-   foreground. Chrome slows down timers in background tabs.
-2. Keep the Mac **plugged in with the lid open**. While watching, the extension keeps the display
-   awake, but closing the lid still puts the Mac to sleep.
-3. Check that **Armed** is on and the badge says `ON`. The badge switches to `LIVE` during a
-   watch window and to `DONE` after it submits.
+The extension runs **inside Chrome on your Mac**. Nothing runs in the cloud, and Claude isn't
+involved at runtime. If the Mac is off or asleep, or Chrome is quit, it won't join.
+
+At each watch window you need:
+
+| Requirement | Why |
+|---|---|
+| Mac on, **lid open, plugged in** | A closed lid sleeps the Mac. While watching, the extension keeps the display awake. |
+| **Chrome running**, any window or none | On a Mac, Chrome keeps running with all windows closed. Quitting it (⌘Q) stops the extension. |
+| Online | Wired or strong Wi-Fi helps a little. |
+
+You **don't** need to open the page yourself. When a watch window starts (10 min early), the
+extension opens the pantry page in its own window if no tab has it. It does this once per day,
+so if you close that window on purpose it stays closed. Leave the window in front: Chrome slows
+down background tabs.
+
+**For unattended weeks:** open System Settings → Battery → Options and turn on **Prevent
+automatic sleeping on power adapter when the display is off**. Add Chrome to System Settings →
+General → Login Items too, so it's running after a restart. Then a plugged-in Mac with the lid
+open stays ready all week without you touching it.
 
 The badge shows the state at a glance:
 
 | Badge | Meaning |
 |---|---|
 | (none) | Disarmed. The extension does nothing. |
+| `!` | Armed, but no name is set in Settings. |
 | `ON` | Armed, outside a watch window, so idle. |
 | `LIVE` | Armed and in a watch window. It will join the moment the list opens. |
 | `DONE` | Already submitted. Locked for 3 hours. |
 
 Default watch windows (Pacific time) start 10 minutes early: Mon 12:00–14:00, Tue
-16:00–18:00, Thu 13:00–16:00. Change them in Settings.
+16:00–18:00, Thu 13:00–16:00. Change them in Settings with one line per window, e.g.
+`Tue 15:00-18:00`.
 
 ## How it decides to join
 
@@ -58,7 +76,8 @@ Default watch windows (Pacific time) start 10 minutes early: Mon 12:00–14:00, 
    with no answer all produce an error alert.
 
 Safety rails:
-- **One submission.** Nothing else is submitted for 3 hours after a submit, across all tabs.
+- **One submission.** Nothing else is submitted for 3 hours after a submit. The background
+  worker hands out the lock, so even two open pantry tabs can't both submit.
   The popup's **Reset 3 h lock** button clears it.
 - **Only in windows.** By default nothing happens outside the watch windows, so browsing the
   page on a Wednesday won't join. You can turn this off in Settings.
