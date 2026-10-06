@@ -19,10 +19,10 @@ const BP = {
     autoSubmit: true,    // false = test mode: fill the form, never click "Join the line"
     onlyInWindows: true, // only act during the watch windows below
     leadMinutes: 10,     // start watching this many minutes before a window
-    windows: [           // Pacific time; day 0 = Sunday
-      { day: 1, start: '12:00', end: '14:00' },
-      { day: 2, start: '16:00', end: '18:00' },
-      { day: 4, start: '13:00', end: '16:00' },
+    windows: [           // Pacific time; day 0 = Sunday; start = actual go-live time
+      { day: 1, start: '11:30', end: '14:00' },
+      { day: 2, start: '15:30', end: '18:00' },
+      { day: 4, start: '12:30', end: '16:00' },
     ],
   },
 

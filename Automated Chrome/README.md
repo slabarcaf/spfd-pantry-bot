@@ -57,8 +57,8 @@ The badge shows the state at a glance:
 | `LIVE` | Armed and in a watch window. It will join the moment the list opens. |
 | `DONE` | Already submitted. Locked for 3 hours. |
 
-Default watch windows (Pacific time) start 10 minutes early: Mon 12:00–14:00, Tue
-16:00–18:00, Thu 13:00–16:00. Change them in Settings with one line per window, e.g.
+Default watch windows (Pacific time) start at the actual go-live times, Mon 11:30, Tue 15:30
+and Thu 12:30, and run to 14:00, 18:00 and 16:00. Watching begins 10 minutes before each. Change them in Settings with one line per window, e.g.
 `Tue 15:00-18:00`.
 
 ## How it decides to join
@@ -96,7 +96,7 @@ Every step is timestamped in the popup's **Log** and in DevTools (filter the con
 
 ## First live run checklist
 
-Run one opening (Tue 16:00 or Thu 13:00) in **test mode** with DevTools open on the pantry tab,
+Run one opening (Tue 15:30 or Thu 12:30) in **test mode** with DevTools open on the pantry tab,
 and note:
 
 - [ ] What the landing page shows while **closed**: no button, a `/closed` URL, or a redirect?

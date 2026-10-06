@@ -45,7 +45,7 @@ The server-rendered HTML of the landing page embeds location state. Fields found
 "recaptchaMinScore": null
 ```
 
-Configured hours (PT):
+Configured hours (PT), as listed on Waitwhile. **Actual go-live times confirmed by the user: Mon 11:30, Tue 15:30, Thu 12:30.** The extension's watch windows use those.
 
 | Day | Hours |
 |---|---|
