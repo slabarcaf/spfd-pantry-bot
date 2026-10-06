@@ -57,9 +57,15 @@ The badge shows the state at a glance:
 | `LIVE` | Armed and in a watch window. It will join the moment the list opens. |
 | `DONE` | Already submitted. Locked for 3 hours. |
 
-Default watch windows (Pacific time) start at the actual go-live times, Mon 11:30, Tue 15:30
-and Thu 12:30, and run to 14:00, 18:00 and 16:00. Watching begins 10 minutes before each. Change them in Settings with one line per window, e.g.
-`Tue 15:00-18:00`.
+Default watch windows (Pacific time, watching starts 10 minutes early):
+
+| Window | Runs |
+|---|---|
+| `Mon 11:30-14:00` | Every Monday. This is the normal schedule. |
+| `2026-10-06 15:30-18:00` | Once, Tue Oct 6, 2026, as a trial run. It never repeats. |
+
+Tuesdays and Thursdays are off. To add another one-off date, add a line in Settings such as
+`2026-10-20 15:30-18:00`. A line like `Tue 15:30-18:00` runs every week.
 
 ## How it decides to join
 

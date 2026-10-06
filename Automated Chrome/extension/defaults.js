@@ -20,9 +20,8 @@ const BP = {
     onlyInWindows: true, // only act during the watch windows below
     leadMinutes: 10,     // start watching this many minutes before a window
     windows: [           // Pacific time; day 0 = Sunday; start = actual go-live time
-      { day: 1, start: '11:30', end: '14:00' },
-      { day: 2, start: '15:30', end: '18:00' },
-      { day: 4, start: '12:30', end: '16:00' },
+      { day: 1, start: '11:30', end: '14:00' },               // every Monday
+      { date: '2026-10-06', start: '15:30', end: '18:00' },   // one-off trial run (Tue)
     ],
   },
 
@@ -50,45 +49,61 @@ const BP = {
     return h * 60 + m;
   },
 
-  // Current weekday + minutes-since-midnight in Pacific time.
+  // Current weekday, date (YYYY-MM-DD) and minutes-since-midnight in Pacific time.
   nowPT(d = new Date()) {
     const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: BP.TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      timeZone: BP.TZ, weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
     }).formatToParts(d);
     const get = (t) => parts.find((p) => p.type === t).value;
-    return { day: BP.DAYS.indexOf(get('weekday')), minutes: +get('hour') * 60 + +get('minute') };
+    return {
+      day: BP.DAYS.indexOf(get('weekday')),
+      date: `${get('year')}-${get('month')}-${get('day')}`,
+      minutes: +get('hour') * 60 + +get('minute'),
+    };
+  },
+
+  // A window is weekly ({day}) or one-off ({date}).
+  appliesOn(w, now) {
+    return w.date ? w.date === now.date : w.day === now.day;
   },
 
   inWindow(cfg, d = new Date()) {
-    const { day, minutes } = BP.nowPT(d);
-    return cfg.windows.some((w) => w.day === day
-      && minutes >= BP.toMin(w.start) - cfg.leadMinutes
-      && minutes < BP.toMin(w.end));
+    const now = BP.nowPT(d);
+    return cfg.windows.some((w) => BP.appliesOn(w, now)
+      && now.minutes >= BP.toMin(w.start) - cfg.leadMinutes
+      && now.minutes < BP.toMin(w.end));
   },
 
-  // Human label for the next window start, e.g. "Tue 16:00".
-  nextWindow(cfg) {
-    const { day, minutes } = BP.nowPT();
-    let best = null;
-    for (const w of cfg.windows) {
-      let ahead = (w.day - day + 7) % 7 * 1440 + BP.toMin(w.start) - cfg.leadMinutes - minutes;
-      if (ahead < 0) ahead += 7 * 1440;
-      if (!best || ahead < best.ahead) best = { ahead, w };
+  // Human label for the next window start, e.g. "Mon 11:30" or "2026-10-06 15:30".
+  nextWindow(cfg, d = new Date()) {
+    const now = BP.nowPT(d);
+    for (let i = 0; i < 8; i++) {
+      const on = BP.nowPT(new Date(d.getTime() + i * 864e5));
+      const next = cfg.windows
+        .filter((w) => BP.appliesOn(w, on) && (i > 0 || BP.toMin(w.start) - cfg.leadMinutes > now.minutes))
+        .sort((a, b) => BP.toMin(a.start) - BP.toMin(b.start))[0];
+      if (next) return BP.label(next);
     }
-    return best ? `${BP.DAYS[best.w.day]} ${best.w.start}` : 'none configured';
+    return 'none in the next week';
+  },
+
+  label(w) {
+    return `${w.date || BP.DAYS[w.day]} ${w.start}`;
   },
 
   formatWindows(windows) {
-    return windows.map((w) => `${BP.DAYS[w.day]} ${w.start}-${w.end}`).join('\n');
+    return windows.map((w) => `${BP.label(w)}-${w.end}`).join('\n');
   },
 
-  // "Mon 12:00-14:00" per line -> [{day, start, end}]
+  // One per line: "Mon 11:30-14:00" (weekly) or "2026-10-06 15:30-18:00" (one-off)
   parseWindows(text) {
     return text.split('\n').map((l) => l.trim()).filter(Boolean).map((line) => {
-      const m = line.match(/^(\w{3})\w*\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
-      const day = m && BP.DAYS.findIndex((d) => d.toLowerCase() === m[1].toLowerCase());
-      if (!m || day < 0) throw new Error(`Bad window line: "${line}" (expected e.g. "Mon 12:00-14:00")`);
+      const m = line.match(/^(\d{4}-\d{2}-\d{2}|\w{3})\w*\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
       const pad = (t) => t.padStart(5, '0');
+      if (m && /^\d{4}-/.test(m[1])) return { date: m[1], start: pad(m[2]), end: pad(m[3]) };
+      const day = m ? BP.DAYS.findIndex((d) => d.toLowerCase() === m[1].toLowerCase()) : -1;
+      if (day < 0) throw new Error(`Bad window line: "${line}" (expected "Mon 11:30-14:00" or "2026-10-06 15:30-18:00")`);
       return { day, start: pad(m[2]), end: pad(m[3]) };
     });
   },
