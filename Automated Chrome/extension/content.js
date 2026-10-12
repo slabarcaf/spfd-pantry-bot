@@ -274,6 +274,9 @@ function finish(outcome, detail) {
 
 function tick() {
   if (!cfg) return;
+  // Orphaned after an extension reload: settings are unreachable, so stop.
+  // The background worker reloads this tab when the next window starts.
+  if (!chrome.runtime?.id) { orphaned(); return; }
   if (location.pathname !== lastPath) {
     lastPath = location.pathname;
     navigating = false;
@@ -287,6 +290,15 @@ function tick() {
   if (r !== 'landing') stopPolling();
   if (r === 'landing') landing();
   else if (r === 'form') form();
+}
+
+let orphanWarned = false;
+function orphaned() {
+  stopPolling();
+  if (!orphanWarned) {
+    orphanWarned = true;
+    console.warn('[BearPantry] Extension was reloaded; reload this tab to re-arm it.');
+  }
 }
 
 let scheduled = false;

@@ -71,19 +71,34 @@ async function refresh() {
   chrome.action.setBadgeBackgroundColor({ color: watching ? '#16a34a' : '#6c47ff' });
   if (watching) chrome.power.requestKeepAwake('display');
   else chrome.power.releaseKeepAwake();
-  if (watching && cfg.name) await openPantryTab();
+  if (watching && cfg.name) await preparePantryTab();
 }
 
-// At the start of a watch window, open the pantry page in its own window if
-// no tab has it. Once per day, so closing it on purpose sticks.
-async function openPantryTab() {
-  const url = BP.ORIGIN + BP.BASE;
-  if ((await chrome.tabs.query({ url: url + '*' })).length) return;
+// Once per day, when a watch window starts: open the pantry page in its own
+// window, or reload the pantry tab that's already open. The reload matters: a
+// tab opened before the extension was last reloaded/updated runs an orphaned
+// script that can no longer read settings, so it would silently do nothing.
+async function preparePantryTab() {
   const today = new Date().toDateString();
-  const { autoOpened } = await chrome.storage.session.get('autoOpened');
-  if (autoOpened === today) return;
-  await chrome.storage.session.set({ autoOpened: today });
-  await chrome.windows.create({ url, focused: true });
+  const { prepared } = await chrome.storage.session.get('prepared');
+  if (prepared === today) return;
+  await chrome.storage.session.set({ prepared: today });
+
+  const [tab] = await chrome.tabs.query({ url: BP.ORIGIN + BP.BASE + '*' });
+  if (tab) {
+    await chrome.tabs.reload(tab.id);
+    await chrome.tabs.update(tab.id, { active: true });
+    await chrome.windows.update(tab.windowId, { focused: true });
+  } else {
+    await chrome.windows.create({ url: BP.ORIGIN + BP.BASE, focused: true });
+  }
+}
+
+// After an install or update, reload open pantry tabs so they run the new code.
+async function reloadPantryTabs() {
+  for (const tab of await chrome.tabs.query({ url: BP.ORIGIN + BP.BASE + '*' })) {
+    chrome.tabs.reload(tab.id);
+  }
 }
 
 chrome.alarms.create('refresh', { periodInMinutes: 1 });
@@ -92,4 +107,4 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && (changes.config || changes.state)) refresh();
 });
 chrome.runtime.onStartup.addListener(refresh);
-chrome.runtime.onInstalled.addListener(refresh);
+chrome.runtime.onInstalled.addListener(() => { reloadPantryTabs(); refresh(); });
