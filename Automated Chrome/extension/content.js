@@ -14,7 +14,8 @@
 'use strict';
 
 const POLL_MS = 2500;
-const FAST_POLL_MS = 1000;           // from 1 min before to 5 min after go-live
+const FAST_POLL_MS = 333;            // ~3/s, from 1 min before to 1 min after go-live
+const BACKOFF_MS = 2000;             // after an error or 429/5xx from the server
 const RESULT_TIMEOUT_MS = 120000;    // the server can stay "busy" for a while at go-live
 const HYDRATION_GRACE_MS = 3000;
 const JOIN_NAV_WATCHDOG_MS = 1500;   // "Join waitlist" clicked but no form yet -> deep link
@@ -190,22 +191,33 @@ function landing() {
   startPolling();
 }
 
-// 1 s polling from 1 min before to 5 min after a window's go-live time.
-function pollDelay() {
+// Fast polling only in a 2-minute band around go-live (e.g. 11:29-11:31).
+function pollInterval() {
   const now = BP.nowPT();
   const nearGoLive = cfg.windows.some((w) => {
     const d = now.minutes - BP.toMin(w.start);
-    return BP.appliesOn(w, now) && d >= -1 && d < 5;
+    return BP.appliesOn(w, now) && d >= -1 && d < 1;
   });
   return nearGoLive ? FAST_POLL_MS : POLL_MS;
 }
 
+// One request in flight at most: the next starts when the previous returns and
+// the interval has passed, so a slow server never gets requests piled on it.
 function startPolling() {
   if (pollTimer) return;
-  BP.log('polling_started', `every ${pollDelay() / 1000}s`);
+  BP.log('polling_started', `every ${pollInterval() / 1000}s`);
+  let fast = pollInterval() === FAST_POLL_MS;
   const loop = async () => {
-    await poll();
-    if (pollTimer) pollTimer = setTimeout(loop, pollDelay());
+    const started = Date.now();
+    const ok = await poll();
+    if (!pollTimer) return;
+    const interval = pollInterval();
+    if ((interval === FAST_POLL_MS) !== fast) {
+      fast = !fast;
+      BP.log('poll_rate', fast ? 'fast: ~3/s until 1 min after go-live' : `normal: every ${POLL_MS / 1000}s`);
+    }
+    const wait = ok === false ? BACKOFF_MS : Math.max(0, interval - (Date.now() - started));
+    pollTimer = setTimeout(loop, wait);
   };
   pollTimer = setTimeout(loop, 0);
 }
@@ -222,6 +234,7 @@ async function poll() {
   pollInflight = true;
   try {
     const res = await fetch(BP.BASE, { cache: 'no-store', credentials: 'include' });
+    if (res.status === 429 || res.status >= 500) { BP.log('poll_backoff', `HTTP ${res.status}`); return false; }
     const html = await res.text();
     // The live page may have moved on (button clicked, form open) while this
     // request was in flight; never yank the user off the form.
@@ -233,6 +246,7 @@ async function poll() {
     }
   } catch (e) {
     BP.log('poll_error', e.message);
+    return false;
   } finally {
     pollInflight = false;
   }

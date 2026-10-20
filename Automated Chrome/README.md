@@ -73,7 +73,8 @@ Tuesdays and Thursdays are off. To add another one-off date, add a line in Setti
    **Join waitlist** button appears, the extension waits until the page is interactive
    (React hydrated, usually under 1 s) and clicks it.
 2. **Fallback poll.** If there's no button, it re-checks the page's `isWaitlistOpen` flag every
-   2.5 s, and only during a watch window. When the flag turns true, it jumps straight to the
+   2.5 s during a watch window, and about 3 times a second from 1 minute before to 1 minute
+   after go-live. Only one check is ever in flight, and it backs off for 2 s on server errors. When the flag turns true, it jumps straight to the
    form (`/details?registration=waitlist`).
 3. **Form.** It fills the fields, checks the values stuck, records the submit time, and clicks
    **Join the line** once.
