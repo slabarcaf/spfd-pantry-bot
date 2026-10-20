@@ -55,6 +55,10 @@ $('unlock').onclick = async () => {
 };
 
 $('options').onclick = () => chrome.runtime.openOptionsPage();
+$('copy').onclick = async () => {
+  await navigator.clipboard.writeText($('status').textContent + '\n\n' + $('log').textContent);
+  $('copy').textContent = 'Copied ✓';
+};
 $('clear').onclick = () => chrome.storage.local.set({ log: [] });
 
 chrome.storage.onChanged.addListener(render);
