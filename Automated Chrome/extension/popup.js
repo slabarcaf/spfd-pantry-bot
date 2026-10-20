@@ -62,4 +62,5 @@ $('copy').onclick = async () => {
 $('clear').onclick = () => chrome.storage.local.set({ log: [] });
 
 chrome.storage.onChanged.addListener(render);
+$('ver').textContent = 'v' + chrome.runtime.getManifest().version;
 render();

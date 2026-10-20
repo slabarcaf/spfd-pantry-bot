@@ -18,7 +18,8 @@ const FAST_POLL_MS = 1000;           // from 1 min before to 5 min after go-live
 const RESULT_TIMEOUT_MS = 120000;    // the server can stay "busy" for a while at go-live
 const HYDRATION_GRACE_MS = 3000;
 const JOIN_NAV_WATCHDOG_MS = 1500;   // "Join waitlist" clicked but no form yet -> deep link
-const FORM_WATCHDOG_MS = 5000;       // on /details but no form -> reload deep link
+const FORM_WATCHDOG_MS = 3000;       // on /details but no form -> reload deep link
+const MAX_FORM_RELOADS = 10;         // like a person hitting refresh while the server is swamped
 const MAX_BUSY_RETRIES = 10;
 // Opened from the popup's "Test fill now": fill only, never submit.
 const TEST_TAB = location.hash === '#bp-test';
@@ -243,10 +244,15 @@ function form() {
   if (!active()) return;
   const nameEl = document.querySelector('#form_name');
   if (!nameEl) {
-    // On /details with no form (load stalled, server busy): reload it, at most twice.
+    // On /details with no form: at go-live the server is swamped and the
+    // client-side load can stall for minutes (Tue 2026-10-20: 2 min 8 s).
+    // A fresh full load gets a server-rendered form, so keep reloading.
     if (Date.now() - routeEnteredAt > FORM_WATCHDOG_MS) {
       const n = +(sessionStorage.getItem('bpFormReloads') || 0);
-      if (n < 2) { sessionStorage.setItem('bpFormReloads', n + 1); deepLink(`no form after 5 s (reload ${n + 1}/2)`); }
+      if (n < MAX_FORM_RELOADS) {
+        sessionStorage.setItem('bpFormReloads', n + 1);
+        deepLink(`no form after ${FORM_WATCHDOG_MS / 1000} s (reload ${n + 1}/${MAX_FORM_RELOADS}) · page: "${headline()}" · buttons: ${buttonLabels() || 'none'}`);
+      }
     }
     return;
   }
@@ -415,6 +421,7 @@ function schedule() {
 (async () => {
   [cfg, state] = await Promise.all([BP.getConfig(), BP.getState()]);
   if (TEST_TAB) BP.log('test_tab_opened');
+  if (cfg.armed) BP.log('loaded', `v${chrome.runtime.getManifest().version} on ${location.pathname}`);
 
   new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
   // Backstop for state that changes without DOM mutations (clock crossing a window).
